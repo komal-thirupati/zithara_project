@@ -9,8 +9,16 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// CORS configuration
+const corsOptions = {
+  origin: ['https://zithara-project-frontend-gko4bpxab-komals-projects-be9512a3.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connect to database
@@ -28,8 +36,12 @@ app.use("/auth", authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Something went wrong!',
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 // Start the server

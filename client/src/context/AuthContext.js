@@ -3,6 +3,10 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +18,7 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(`${bdurl}/auth/me`);
       setUser(response.data);
     } catch (error) {
+      console.error('Error fetching user:', error);
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
     } finally {
@@ -42,6 +47,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return user;
     } catch (error) {
+      console.error('Login error:', error);
       setError(error.response?.data?.message || 'Login failed');
       throw error;
     }

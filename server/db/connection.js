@@ -42,9 +42,4 @@ const connectDB = async () => {
     }
 };
 
-module.exports = connectDB;
-
-
-
-
-https://zithara-project-frontend-gko4bpxab-komals-projects-be9512a3.vercel.app/register
+module.exports = connectDB; 

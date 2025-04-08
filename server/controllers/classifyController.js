@@ -72,7 +72,8 @@
 //v4
 const multer = require("multer");
 const TeachableMachine = require("@sashido/teachablemachine-node");
-// const model =require('../models/teachableModel');
+const Product = require('../models/productModel');
+
 // Configure multer to handle file uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -82,41 +83,58 @@ const model = new TeachableMachine({
 
 // Handle image upload and classification
 exports.classifyImage = [
-  upload.single("image"), // Middleware to handle single file upload
+  upload.single("image"),
   async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No image file uploaded." });
       }
 
-      console.log("File details:", req.file);
-
       // Convert the uploaded file buffer to a Base64-encoded string
       const imageBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-      console.log('1')
-      // Validate the Base64 format
+
+      // Validate the image format
       if (!req.file.mimetype.startsWith("image/")) {
-        console.log('2')
-        console.error("Invalid MIME type:", req.file.mimetype);
-        return res.status(400).json({ message: "Uploaded file is not an image." });
-        console.log('2')
+        return res.status(400).json({ message: "Invalid image format." });
       }
-      
-      console.log('3')
-      console.log("Valid Base64 Encoded Image:", imageBase64.slice(0, 50)); // Log first 50 characters
-      
-      // Use the Teachable Machine model to classify the image
+
+      // Get predictions from the model
       const predictions = await model.classify({
-        imageUrl: imageBase64,
+        image: imageBase64,
       });
-      console.log('4')
-      
-      console.log("Predictions:", predictions);
-      return res.status(200).json(predictions);
+
+      // Sort predictions by score and get top 2
+      const topPredictions = predictions
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2)
+        .map(pred => pred.class.toLowerCase());
+
+      // Search for products matching the predictions
+      const searchPromises = topPredictions.map(category => 
+        Product.find({
+          $or: [
+            { product_main_type: { $regex: category, $options: 'i' } },
+            { product_sub1_type: { $regex: category, $options: 'i' } },
+            { product_sub2_type: { $regex: category, $options: 'i' } },
+          ],
+        })
+      );
+
+      const searchResults = await Promise.all(searchPromises);
+      const products = searchResults.flat();
+
+      // Return both predictions and matching products
+      res.status(200).json({
+        predictions,
+        products: products.length > 0 ? products : []
+      });
+
     } catch (error) {
-      console.log('5')
-      console.error("Error classifying image:", error.message || error);
-      return res.status(500).json({ message: "Error processing the image." });
+      console.error("Error in classifyImage:", error);
+      res.status(500).json({ 
+        message: "Error processing the image.",
+        error: error.message 
+      });
     }
   },
 ];

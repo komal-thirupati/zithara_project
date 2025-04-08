@@ -3,10 +3,10 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        const mongoURI = process.env.MONGODB_URI;
-        if (!mongoURI) {
-            throw new Error('MONGODB_URI is not defined in environment variables');
-        }
+        // Use environment variable or fallback to MongoDB Atlas connection string
+        const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://admin:admin@cluster0.vr23ljt.mongodb.net/jewellery_app?retryWrites=true&w=majority';
+        
+        console.log('Attempting to connect to MongoDB with URI:', mongoURI);
 
         const options = {
             useNewUrlParser: true,
@@ -38,6 +38,7 @@ const connectDB = async () => {
 
     } catch (err) {
         console.error('Error connecting to MongoDB:', err.message);
+        console.error('Full error:', err);
         process.exit(1);
     }
 };

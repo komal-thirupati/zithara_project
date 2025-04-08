@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
+      console.log('Registering with URL:', `${bdurl}/auth/register`);
       const response = await axios.post(`${bdurl}/auth/register`, userData);
       const { token, user } = response.data;
       localStorage.setItem('token', token);
@@ -57,7 +58,8 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       return user;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
       throw new Error(errorMessage);
     }

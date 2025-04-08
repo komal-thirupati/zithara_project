@@ -11,6 +11,7 @@ const Register = () => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { user, register, error: authError } = useAuth();
 
@@ -36,26 +37,34 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setIsSubmitting(false);
       return;
     }
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
+      setIsSubmitting(false);
       return;
     }
 
     try {
+      console.log('Submitting registration form:', formData);
       const userData = {
         username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password
       };
       await register(userData);
+      navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -78,6 +87,7 @@ const Register = () => {
               placeholder="Username"
               required
               className="auth-input"
+              disabled={isSubmitting}
             />
           </div>
           <div className="form-group">
@@ -89,6 +99,7 @@ const Register = () => {
               placeholder="Email Address"
               required
               className="auth-input"
+              disabled={isSubmitting}
             />
           </div>
           <div className="form-group">
@@ -100,6 +111,7 @@ const Register = () => {
               placeholder="Password"
               required
               className="auth-input"
+              disabled={isSubmitting}
             />
           </div>
           <div className="form-group">
@@ -111,11 +123,16 @@ const Register = () => {
               placeholder="Confirm Password"
               required
               className="auth-input"
+              disabled={isSubmitting}
             />
           </div>
           <div className="form-group">
-            <button type="submit" className="auth-button">
-              Register
+            <button 
+              type="submit" 
+              className="auth-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Registering...' : 'Register'}
             </button>
           </div>
           <div className="auth-links">
